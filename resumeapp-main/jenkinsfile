@@ -1,0 +1,52 @@
+pipeline{
+    agent any
+    environment{
+      DOCKERHUB_CREDENTIALS = credentials('abdallauno1-dockerhub')
+    }
+    stages{
+        stage("Build  image"){
+          /* build docker image  */
+            steps{
+                sh 'docker build -t abdallauno1/resumeapp:v1 .'
+            }            
+        }
+        stage("Login"){
+          /* login in dockerhub  */
+            steps{
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }            
+        }
+        stage("Push image"){
+          /* push docker image to dockerhub */
+            steps{
+                sh 'docker push abdallauno1/resumeapp:v1'
+            }            
+        }
+        stage("Deploy k8s on Linux Machine"){
+	        steps{
+                sshagent(['mabdalla']) {
+                    sh "scp -o StrictHostKeyChecking=no deploy.yml mabdalla@192.168.96.100:/home/mabdalla"
+		    sh "scp -o StrictHostKeyChecking=no playbook.yml mabdalla@192.168.96.100:/home/mabdalla"
+                    script{
+                        try{
+			    sh "ssh mabdalla@192.168.96.100 kubectl apply -f deploy.yml"
+                        }catch(error){
+                            echo "========can not SSH to Linux Machine ========"
+                        }
+                    }
+                }
+            }        
+        }
+    }
+    post{
+        always{
+            sh "docker logout"
+        }
+        success{
+            echo "========pipeline executed successfully ========"
+        }
+        failure{
+            echo "========pipeline execution failed========"
+        }
+    }
+}
