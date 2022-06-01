@@ -1,13 +1,13 @@
 pipeline{
     agent any
     environment{
-      DOCKERHUB_CREDENTIALS = credentials('abdallauno1-dockerhub')
+      DOCKERHUB_CREDENTIALS = credentials('bndah-dockerhub')
     }
     stages{
         stage("Build  image"){
           /* build docker image  */
             steps{
-                sh 'docker build -t abdallauno1/resumeapp:v1 .'
+                sh 'docker build -t bndah/resumeapp:v1 .'
             }            
         }
         stage("Login"){
@@ -19,7 +19,7 @@ pipeline{
         stage("Push image"){
           /* push docker image to dockerhub */
             steps{
-                sh 'docker push abdallauno1/resumeapp:v1'
+                sh 'docker push bndah/resumeapp:v1'
             }            
         }
         stage("Deploy k8s on Linux Machine"){
